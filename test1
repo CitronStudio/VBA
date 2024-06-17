@@ -1,0 +1,50 @@
+Sub ImportPDFContent()
+Dim pdfPath As String
+Dim pageCount As Integer
+Dim pageNum As Integer
+Dim pdfPageText As String
+Dim sheet As Worksheet
+Dim acroApp As Object
+Dim avDoc As Object
+Dim pdDoc As Object
+Dim jso As Object
+
+' PDFファイルのパスを指定する（例）
+pdfPath = "C:\path\to\your\file.pdf"
+
+' シートの指定（例：Sheet1）
+Set sheet = ThisWorkbook.Sheets("Sheet1")
+
+' Adobe Acrobatアプリケーションを作成
+Set acroApp = CreateObject("AcroExch.App")
+Set avDoc = CreateObject("AcroExch.AVDoc")
+
+' PDFを開く
+If avDoc.Open(pdfPath, "") Then
+    ' PDDocオブジェクトを取得
+    Set pdDoc = avDoc.GetPDDoc
+    ' JSOオブジェクトを取得
+    Set jso = pdDoc.GetJSObject
+    
+    ' ページ数を取得
+    pageCount = pdDoc.GetNumPages
+    
+    ' 各ページの内容を取得し、シートに転記
+    For pageNum = 0 To pageCount - 1
+        pdfPageText = jso.GetPageNthWord(pageNum, 0, True)
+        sheet.Cells(pageNum + 1, 1).Value = pdfPageText
+    Next pageNum
+    
+    ' PDFを閉じる
+    avDoc.Close True
+End If
+
+' オブジェクトを解放
+Set jso = Nothing
+Set pdDoc = Nothing
+Set avDoc = Nothing
+acroApp.Exit
+Set acroApp = Nothing
+
+MsgBox "PDFの内容を転記しました"
+End Sub
