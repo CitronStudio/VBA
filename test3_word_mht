@@ -1,0 +1,38 @@
+Sub OpenPDFAndSaveAsMHT()
+    Dim pdfPath As String
+    Dim mhtPath As String
+    Dim wordApp As Object
+    Dim wordDoc As Object
+
+    ' PDFのパスを指定します
+    pdfPath = "C:\Path\To\Your\PDF\file.pdf"
+    ' 保存するMHTファイルのパスを指定します
+    mhtPath = "C:\Path\To\Save\file.mht"
+
+    ' Wordアプリケーションを起動します
+    On Error Resume Next
+    Set wordApp = GetObject(Class:="Word.Application")
+    If wordApp Is Nothing Then
+        Set wordApp = CreateObject(Class:="Word.Application")
+    End If
+    On Error GoTo 0
+
+    ' Wordアプリケーションを表示します
+    wordApp.Visible = True
+
+    ' PDFをWordで開きます
+    Set wordDoc = wordApp.Documents.Open(FileName:=pdfPath, ConfirmConversions:=False, ReadOnly:=True, AddToRecentFiles:=False)
+
+    ' 開いたPDFをMHT形式で保存します
+    wordDoc.SaveAs2 FileName:=mhtPath, FileFormat:=wdFormatWebArchive
+
+    ' ドキュメントを閉じます（保存しない）
+    wordDoc.Close SaveChanges:=False
+
+    ' Wordアプリケーションを閉じます
+    wordApp.Quit
+
+    ' 開放
+    Set wordDoc = Nothing
+    Set wordApp = Nothing
+End Sub
