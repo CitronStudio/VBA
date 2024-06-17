@@ -1,0 +1,26 @@
+Sub OpenPDFInWord()
+    Dim pdfPath As String
+    Dim wordApp As Object
+    Dim wordDoc As Object
+
+    ' PDFのパスを指定します
+    pdfPath = "C:\Path\To\Your\PDF\file.pdf"
+
+    ' Wordアプリケーションを起動します
+    On Error Resume Next
+    Set wordApp = GetObject(Class:="Word.Application")
+    If wordApp Is Nothing Then
+        Set wordApp = CreateObject(Class:="Word.Application")
+    End If
+    On Error GoTo 0
+
+    ' Wordアプリケーションを表示します
+    wordApp.Visible = True
+
+    ' PDFをWordで開きます
+    Set wordDoc = wordApp.Documents.Open(FileName:=pdfPath, ConfirmConversions:=False, ReadOnly:=True, AddToRecentFiles:=False)
+
+    ' 開放
+    Set wordDoc = Nothing
+    Set wordApp = Nothing
+End Sub
