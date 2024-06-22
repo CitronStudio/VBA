@@ -1,0 +1,133 @@
+Option Explicit
+
+Sub OpenPDFAndSaveAsMHT()
+    
+    Dim pdfPath As String
+    Dim mhtPath As String
+    Dim wordApp As Object
+    Dim wordDoc As Object
+    Dim startTime As Single
+    Dim fd As FileDialog
+    Dim selectedFilePath As String
+    Dim wb As Workbook
+    Dim MHTwb As Workbook
+    Dim ws As Worksheet
+
+    ' 画面更新・再計算OFF
+    Application.ScreenUpdating = False
+    Application.Calculation = xlCalculationManual
+
+    ' シートのクリア
+    Set wb = ThisWorkbook
+    wb.Worksheets(1).Cells.Clear
+
+    ' ダイアログを表示
+    Set fd = Application.FileDialog(msoFileDialogFilePicker)
+    
+    With fd
+    
+        .Title = "PDFファイルを選択してください"
+        .Filters.Clear
+        .Filters.Add "PDFファイル", "*.pdf"
+        .AllowMultiSelect = False
+
+        If .Show = -1 Then ' ファイルが選択された場合
+            selectedFilePath = .SelectedItems(1)
+            
+            ' 選択されたファイルがPDFかどうかをチェック
+            If Right(selectedFilePath, 4) = ".pdf" Then
+                ' PDFのパスを指定します
+                pdfPath = selectedFilePath
+            Else
+                MsgBox "選択されたファイルはPDFではありません。", vbCritical
+                Set fd = Nothing
+                Set wb = Nothing
+                Application.ScreenUpdating = True
+                Application.Calculation = xlCalculationAutomatic
+                Application.Calculate
+                Exit Sub
+            End If
+        Else
+            MsgBox "ファイルが選択されませんでした。", vbExclamation
+            Set fd = Nothing
+            Set wb = Nothing
+            Application.ScreenUpdating = True
+            Application.Calculation = xlCalculationAutomatic
+            Application.Calculate
+            Exit Sub
+        End If
+        
+    End With
+
+    ' 保存するMHTファイルのパスを指定します
+    mhtPath = Replace(pdfPath, ".pdf", ".mht")
+
+    ' Wordアプリケーションを起動します
+    On Error Resume Next
+    Set wordApp = GetObject(Class:="Word.Application")
+    If wordApp Is Nothing Then
+        Set wordApp = CreateObject(Class:="Word.Application")
+    End If
+    On Error GoTo 0
+
+    ' Wordアプリケーションを表示します
+    wordApp.Visible = True
+
+    ' PDFをWordで開きます
+    Set wordDoc = wordApp.Documents.Open( _
+        Filename:=pdfPath, _
+        ConfirmConversions:=False, _
+        ReadOnly:=False, _
+        AddToRecentFiles:=False, _
+        Format:=wdOpenFormatAuto)
+
+    ' ドキュメントが開き、かつ変換が完了するまで待機（最大20秒）
+    startTime = Timer
+    Do While (wordDoc Is Nothing And wordDoc.ReadOnly) Or Timer < startTime + 20
+        DoEvents
+    Loop
+
+    ' 開いたPDFをMHT形式で保存します
+    If wordDoc Is Nothing Then
+        MsgBox "PDFの読み込みに失敗しました。"
+    Else
+        wordDoc.SaveAs2 Filename:=mhtPath, FileFormat:=wdFormatWebArchive
+    End If
+
+    ' ドキュメントを閉じます
+    wordDoc.Close SaveChanges:=False
+    ' Wordアプリケーションを閉じます
+    wordApp.Quit
+
+    ' MHTファイルをExcelで開きます
+    Set MHTwb = Workbooks.Open(Filename:=mhtPath)
+    Do While MHTwb Is Nothing
+        DoEvents
+    Loop
+
+    ' MHTファイルの内容をシートにコピーします
+    MHTwb.Activate
+    Cells.Select
+    Selection.Copy
+    wb.Activate
+    wb.Worksheets(1).Cells.Select
+    ActiveSheet.Paste
+    wb.Worksheets(1).Cells(1, 1).Select
+
+    ' MHTファイルを閉じます
+    Application.CutCopyMode = False
+    MHTwb.Close
+
+    ' 開放
+    Set fd = Nothing
+    Set wordDoc = Nothing
+    Set wordApp = Nothing
+    Set wb = Nothing
+    Set MHTwb = Nothing
+
+    ' 画面更新・計算ON
+    Application.ScreenUpdating = True
+    Application.Calculation = xlCalculationAutomatic
+    Application.Calculate
+    
+End Sub
