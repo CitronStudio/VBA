@@ -1,4 +1,4 @@
-**OpenPDFAndSaveAsMHT**
+## **OpenPDFAndSaveAsMHT**
 ## 機能説明
 
 このVBAマクロは、次のようなステップでPDFファイルをMHT（Web Archive）形式に変換し、その内容をExcelシートに貼り付けます。
